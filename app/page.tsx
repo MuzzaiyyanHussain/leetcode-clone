@@ -1,7 +1,8 @@
 import { UserButton } from "@clerk/nextjs";
-import Image from "next/image";
+import {onBoardUser} from "@/modules/auth"
 
-export default function Home() {
+export default async function Home() {
+  await onBoardUser()
   return (
     <div>
       <UserButton afterSignOutUrl="/sign-in"  />
