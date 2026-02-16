@@ -6,6 +6,10 @@ import Image from 'next/image'
 import Link from 'next/link'
 import React from 'react'
 
+type userRoleProps = {
+  role:"USER" | "ADMIN"
+}
+
 const Navbar = ({userRole}) => {
   return (
     <nav className="fixed top-4 left-1/2 transform -translate-x-1/2 z-50 w-full max-w-5xl px-4">
