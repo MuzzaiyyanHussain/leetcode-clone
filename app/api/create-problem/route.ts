@@ -29,11 +29,18 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ error: "Reference solutions must be provided for all supported languages" })
         }
 
-        for (const [languages, solutions] of Object.entries(referenceSolutions)) {
+        for (const [languages, solutionCode] of Object.entries(referenceSolutions)) {
             const languageId = getJudge0LanguageId(languages);
             if (!languageId) {
                 return NextResponse.json({ error: "UNSUPPORTED LANGUAGES" })
             }
+
+            const submissions = testCases.map(({ input, output }) => ({
+                source_code: solutionCode,
+                language_id: languageId,
+                stdin: input,
+                expected_output: output,
+            }));
         }
     } catch (error) {
 
