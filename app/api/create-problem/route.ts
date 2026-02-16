@@ -1,4 +1,5 @@
-import { getJudge0LanguageId } from "@/lib/judge0";
+import { db } from "@/lib/db";
+import { getJudge0LanguageId, poolBatchResults, submitBatch } from "@/lib/judge0";
 import { currentUserRole } from "@/modules/auth";
 import { currentUser } from "@clerk/nextjs/server";
 import { UserRole } from "@prisma/client";
@@ -41,7 +42,29 @@ export async function POST(request: NextRequest) {
                 stdin: input,
                 expected_output: output,
             }));
+
+            const submissionResults = await submitBatch(submissions);
+            const tokens = submissionResults.map((res) => res.tokens);
+            const results = await poolBatchResults(tokens);
+
+            for (let i = 0; i < results.length; i++) {
+                const result = results[i];
+                if (result.status.id !== 3) {
+                    return NextResponse.json({
+                        error: `Validation failed for language ${languages}`,
+                        testCase: {
+                            input: submissions[i].stdin,
+                            expectedOuput: submissions[i].expected_output,
+                            actualOutput: result.stdout,
+                            error: result.stderr || result.compile_output
+                        },
+                        details: result,
+                    },
+                    );
+                }
+            }
         }
+       
     } catch (error) {
 
     }
