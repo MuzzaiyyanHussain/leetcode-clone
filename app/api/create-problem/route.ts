@@ -1,14 +1,13 @@
 import { db } from "@/lib/db";
 import { getJudge0LanguageId, poolBatchResults, submitBatch } from "@/lib/judge0";
-import { currentUserRole } from "@/modules/auth";
-import { currentUser } from "@clerk/nextjs/server";
+import { currentUserRole, getCurrentUser } from "@/modules/auth";
 import { UserRole } from "@prisma/client";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function POST(request: NextRequest) {
     try {
         const userRole = await currentUserRole();
-        const user = await currentUser();
+        const user = await getCurrentUser();
 
         if (userRole !== UserRole.ADMIN) {
             return NextResponse.json({ error: "Unauthorised" })
@@ -64,8 +63,34 @@ export async function POST(request: NextRequest) {
                 }
             }
         }
-       
-    } catch (error) {
 
+        const newProblem = await db.problem.create({
+            data: {
+                title,
+                description,
+                difficulty,
+                tags,
+                examples,
+                constraints,
+                testCases,
+                codeSnippets,
+                referenceSolutions,
+                user: {
+                    connect: {
+                        id: user!.id,
+                    },
+                },
+            },
+        });
+        if (!user) {
+            return NextResponse.json({ error: "Unauthenticated" }, { status: 401 });
+        }
+
+
+        return NextResponse.json({ success: true, message: "Problem created successfully", data: newProblem })
+
+    } catch (error) {
+        console.log("Database error", error);
+        return NextResponse.json({ error: "Failed to save problem to database" })
     }
 }
